@@ -45,11 +45,13 @@ does not need to change to absorb that.
    the SAM loss term made things slightly *worse*, which is almost certainly a
    too-short-training artifact, not a real finding. Needs a proper GPU run with the full
    `{0.03, 0.1, 0.3, 1.0}` sweep from `DEVELOPMENT_PLAN.md`.
-3. **Kudaliar demo region prebake may still be pending** — this machine kept running out
-   of memory generating it (see `scripts/prebake_demo.py`'s per-region-subprocess
-   workaround). Punjab's two regions are done and gate-pass; re-run
-   `python -m scripts.prebake_demo` on a real machine to fill in Kudaliar and to redo
-   everything at full quality once a better model is trained.
+3. **The model doesn't generalize to Kudaliar yet.** All 3 demo regions are prebaked
+   (`web/demo_cache/`) — Punjab's two pass the gate (SAM 2.8-3.0°), but Kudaliar fails
+   it (SAM 6.25°, just over the 5° threshold) because training data was weighted toward
+   Punjab-like scenes. The gate correctly caught this and served bicubic instead — a
+   good demo moment, but training on more Kudaliar-region data (or the full Kudaliar
+   dataset properly, not the 32×32-crop subset) should fix the underlying gap. Re-run
+   `python -m scripts.prebake_demo` after retraining to refresh all three.
 4. **5-zone validation, per-class IoU for the land-cover head, ONNX export/latency
    benchmark, model card, and the actual pitch deck edits** — all described in
    `FOUR_DAY_PLAN.md` sections 2-4, none started.

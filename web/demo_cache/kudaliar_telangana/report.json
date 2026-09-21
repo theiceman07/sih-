@@ -1,0 +1,38 @@
+{
+  "region": "kudaliar_telangana",
+  "bbox": [
+    78.55,
+    18.75,
+    78.6,
+    18.8
+  ],
+  "gate_passed": false,
+  "gate_report": {
+    "passed": false,
+    "reason": "SAM 6.25deg >= 5.0deg; NDVI delta 0.0852 >= 0.05",
+    "spectral_deg": 6.254123687744141,
+    "reflectance_l1": 0.03642667457461357,
+    "ndvi_delta": 0.08519686758518219
+  },
+  "output_shape": [
+    10,
+    2244,
+    2140
+  ],
+  "scale": 4,
+  "class_names": [
+    "tree_cover",
+    "shrubland",
+    "grassland",
+    "cropland",
+    "built_up",
+    "bare_sparse_veg",
+    "snow_ice",
+    "water",
+    "herbaceous_wetland",
+    "mangrove",
+    "moss_lichen"
+  ],
+  "elapsed_seconds": 81.0,
+  "has_confidence": false
+}

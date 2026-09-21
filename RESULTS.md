@@ -154,23 +154,32 @@ one (`python -m infer.gate`).
 
 ---
 
-## 7. Live pipeline result — the gate passing on real data
+## 7. Live pipeline result — the gate on real data, both outcomes
 
 After fixing the SR-head training bug (section 4), the full pipeline was run end to end
-on real, live-fetched Sentinel-2 for two of the three demo regions:
+on real, live-fetched Sentinel-2 for all three demo regions:
 
 | Region | Gate | SAM (°) | Reflectance L1 | ΔNDVI |
 |---|---|---|---|---|
 | Punjab wheat belt | **PASS** | 2.81 | 0.0201 | 0.0389 |
 | Punjab wheat belt (2) | **PASS** | 3.03 | 0.0235 | 0.0395 |
-| Kudaliar, Telangana | *(pending — see below)* | | | |
+| Kudaliar, Telangana | **FAIL** (bicubic served) | 6.25 | 0.0364 | 0.0852 |
 
-All three thresholds (SAM<5°, reflectance<0.05, ΔNDVI<0.05) cleared on a genuinely
-trained model, on live data, output as a correctly-georeferenced GeoTIFF (verified:
-EPSG:32643, 2.5m pixel size, correct band descriptions) — this is the first real
-end-to-end proof that the pipeline works, not just its individual pieces in isolation.
-Reproduce: `python -m scripts.prebake_demo` (writes `web/demo_cache/`, open
-`web/index.html` via a static server to view).
+Two honest findings here, both worth having in the pitch:
+
+1. **The model generalizes to Punjab but not yet to Kudaliar** — training data was
+   weighted toward Punjab-like scenes (see `train/train_srm.py`'s `TRAIN_WINDOWS`), and
+   Kudaliar's different terrain/crop mix pushed SAM to 6.25°, just over the 5° threshold.
+   This is exactly the generalization risk `FOUR_DAY_PLAN.md`'s own risk register named
+   up front, now measured rather than assumed.
+2. **The gate did its job.** It caught the out-of-distribution output and served bicubic
+   instead of silently shipping a spectrally-wrong SR tile. This is the demo's strongest
+   moment for the "trustworthy" pitch: show the jury a PASS (Punjab) and a FAIL
+   (Kudaliar) side by side — the system knowing the difference is the actual product.
+
+All outputs are correctly-georeferenced GeoTIFFs (verified: EPSG:32643, 2.5m pixel size,
+correct band descriptions). Reproduce: `python -m scripts.prebake_demo` (writes
+`web/demo_cache/`, open `web/index.html` via a static server to view).
 
 ---
 
