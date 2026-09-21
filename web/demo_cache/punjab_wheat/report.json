@@ -1,0 +1,38 @@
+{
+  "region": "punjab_wheat",
+  "bbox": [
+    75.75,
+    30.55,
+    75.8,
+    30.6
+  ],
+  "gate_passed": true,
+  "gate_report": {
+    "passed": true,
+    "reason": "",
+    "spectral_deg": 2.814457654953003,
+    "reflectance_l1": 0.020096056163311005,
+    "ndvi_delta": 0.03892911970615387
+  },
+  "output_shape": [
+    10,
+    2228,
+    1932
+  ],
+  "scale": 4,
+  "class_names": [
+    "tree_cover",
+    "shrubland",
+    "grassland",
+    "cropland",
+    "built_up",
+    "bare_sparse_veg",
+    "snow_ice",
+    "water",
+    "herbaceous_wetland",
+    "mangrove",
+    "moss_lichen"
+  ],
+  "elapsed_seconds": 64.3,
+  "has_confidence": false
+}

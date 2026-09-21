@@ -26,3 +26,10 @@ train/checkpoints/
 models/weights/*.pth
 bash.exe.stackdump
 .claude/
+data_raw/
+model/
+api/job_outputs/
+# Demo cache GeoTIFFs: regeneratable (python -m scripts.prebake_demo) and
+# some exceed GitHub's 100MB file limit; PNGs/JSON in the same tree are
+# small and kept so the static dashboard works without regenerating them.
+web/demo_cache/*/*.tif

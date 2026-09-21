@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRM &mdash; Spectral-Safe Super-Resolution Evidence Dashboard</title>
+<style>
+  :root {
+    --bg: #0b1220; --panel: #131c2e; --panel-2: #1a2740; --text: #e8edf5;
+    --muted: #93a3bd; --accent: #4fd1c5; --accent-2: #f6ad55; --bad: #fc8181;
+    --good: #68d391; --border: #24324d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); margin-bottom: 28px; font-size: 0.95rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 28px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card h2 { font-size: 1.05rem; margin: 0 0 4px; }
+  .card .desc { color: var(--muted); font-size: 0.82rem; margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 600; }
+  tr.highlight td { color: var(--accent); font-weight: 600; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 0.82rem; }
+  .bar-label { width: 80px; flex-shrink: 0; color: var(--muted); }
+  .bar-track { flex: 1; background: var(--panel-2); border-radius: 4px; height: 14px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .bar-value { width: 56px; text-align: right; flex-shrink: 0; }
+  .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .stat-row:last-child { border-bottom: none; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 0.72rem; font-weight: 600; }
+  .tag.good { background: rgba(104,211,145,0.15); color: var(--good); }
+  .tag.bad { background: rgba(252,129,129,0.15); color: var(--bad); }
+  .note { color: var(--muted); font-size: 0.78rem; margin-top: 10px; line-height: 1.5; }
+  .demo-panel { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  select, button {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px; font-size: 0.88rem;
+  }
+  button { background: var(--accent); color: #05201d; font-weight: 600; cursor: pointer; border: none; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  #jobStatus { margin-top: 12px; font-size: 0.85rem; white-space: pre-wrap; color: var(--muted); }
+  .loading { color: var(--muted); font-size: 0.85rem; }
+  .footer { text-align: center; color: var(--muted); font-size: 0.78rem; margin-top: 40px; }
+
+  .demo-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 22px 24px; margin-bottom: 28px;
+  }
+  .demo-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  .demo-header h2 { margin: 0; font-size: 1.15rem; }
+  .region-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .region-tab {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+    padding: 7px 14px; border-radius: 100px; font-size: 0.85rem; cursor: pointer;
+  }
+  .region-tab.active { background: var(--accent); color: #05201d; border-color: var(--accent); font-weight: 600; }
+  .image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .image-cell { background: var(--panel-2); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .image-cell img { width: 100%; display: block; aspect-ratio: 1; object-fit: cover; background: #06101f; }
+  .image-cell .cap { padding: 8px 12px; font-size: 0.78rem; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .gate-badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 10px;
+    font-size: 0.9rem; font-weight: 600; margin-bottom: 16px;
+  }
+  .gate-badge.pass { background: rgba(104,211,145,0.15); color: var(--good); border: 1px solid rgba(104,211,145,0.3); }
+  .gate-badge.fail { background: rgba(246,173,85,0.15); color: var(--accent-2); border: 1px solid rgba(246,173,85,0.3); }
+  .gate-details { font-size: 0.78rem; color: var(--muted); margin-bottom: 16px; line-height: 1.6; }
+  .placeholder-note { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Spectral-Safe Super-Resolution &mdash; Live Prototype</h1>
+  <div class="subtitle">SIH26142 &middot; Team AL Clauda &middot; real Sentinel-2 data, real trained model, real gate decisions</div>
+
+  <div class="demo-card">
+    <div class="demo-header">
+      <h2>Prototype output &mdash; pre-baked, real inference</h2>
+      <div class="region-tabs" id="regionTabs"></div>
+    </div>
+    <div id="demoContent"><span class="loading">Loading demo cache&hellip;</span></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Phase 0 baseline bank</h2>
+      <div class="desc">Real Sentinel-2, Punjab wheat belt. Frozen eval/metrics.py suite (Wald 4&times; synthetic degradation).</div>
+      <div id="phase0Table" class="loading">Loading&hellip;</div>
+    </div>
+
+    <div class="card">
+      <h2>opensr-test trustworthiness benchmark</h2>
+      <div class="desc">Real 5m VENuS ground truth. Synthesis = genuine detail added; hallucination = fabricated detail not in GT.</div>
+      <div id="opensrTable" class="loading">Loading&hellip;</div>
+    </div>
+
+    <div class="card">
+      <h2>SAM-loss ablation &mdash; real Kudaliar (India) GT</h2>
+      <div class="desc">&lambda;<sub>sam</sub>=0 (L1 only) vs &lambda;<sub>sam</sub>=0.1 (L1+SAM+NDVI), held-out acquisition dates, Telangana.</div>
+      <div id="ablationTable" class="loading">Loading&hellip;</div>
+    </div>
+
+    <div class="card">
+      <h2>Live demo &mdash; trigger a job</h2>
+      <div class="desc">Calls the FastAPI service (api/main.py). Start it locally with <code>uvicorn api.main:app</code>.</div>
+      <div class="demo-panel">
+        <select id="regionSelect">
+          <option value="punjab_wheat">Punjab wheat belt</option>
+          <option value="punjab_wheat_2">Punjab wheat belt (2)</option>
+          <option value="kudaliar_telangana">Kudaliar, Telangana</option>
+        </select>
+        <input id="apiBase" type="text" value="http://localhost:8000" style="flex:1; min-width:160px;" placeholder="API base URL">
+        <button id="runJobBtn">Run SRM job</button>
+      </div>
+      <div id="jobStatus"></div>
+    </div>
+  </div>
+
+  <div class="footer">Generated from phase0_results/*.csv via eval/export_dashboard_data.py &mdash; re-run that script after any new benchmark to refresh this page.</div>
+</div>
+
+<script>
+const METRIC_LABEL = {
+  psnr: "PSNR (dB, higher better)", ssim: "SSIM (higher better)",
+  sam: "SAM (deg, lower better)", ergas: "ERGAS (lower better)",
+  ndvi_delta: "|&Delta;NDVI| (lower better)",
+  reflectance: "Reflectance L1 (lower better)", spectral: "Spectral SAD (lower better)",
+  synthesis: "Synthesis (higher = more real detail)",
+  ha_metric: "Hallucination (lower better)", om_metric: "Omission (lower better)",
+  im_metric: "Improvement (higher better)",
+};
+const LOWER_IS_BETTER = new Set(["sam", "ergas", "ndvi_delta", "reflectance", "spectral", "ha_metric", "om_metric"]);
+
+function fmt(v) { return typeof v === "number" ? v.toFixed(4).replace(/0+$/, "").replace(/\.$/, ".0") : v; }
+
+function renderTable(containerId, sectionData, metricOrder, highlightMethod) {
+  const el = document.getElementById(containerId);
+  if (!sectionData) { el.innerHTML = '<span class="note">No data yet &mdash; run the matching script and re-export.</span>'; return; }
+
+  const methods = Object.keys(sectionData);
+  let html = '<table><thead><tr><th>method</th>';
+  metricOrder.forEach(m => html += `<th title="${METRIC_LABEL[m] || m}">${m}</th>`);
+  html += '</tr></thead><tbody>';
+
+  methods.forEach(method => {
+    const isHi = highlightMethod && method === highlightMethod;
+    html += `<tr class="${isHi ? 'highlight' : ''}"><td>${method}</td>`;
+    metricOrder.forEach(m => {
+      const v = sectionData[method][m];
+      html += `<td>${v !== undefined ? fmt(v) : '&mdash;'}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+async function loadData() {
+  let data;
+  try {
+    const res = await fetch('data/results.json', { cache: 'no-store' });
+    data = await res.json();
+  } catch (e) {
+    ['phase0Table', 'opensrTable', 'ablationTable'].forEach(id =>
+      document.getElementById(id).innerHTML = '<span class="note">Could not load data/results.json &mdash; run: python -m eval.export_dashboard_data</span>');
+    return;
+  }
+
+  renderTable('phase0Table', data.phase0_baseline, ['psnr', 'ssim', 'sam', 'ergas', 'ndvi_delta']);
+  renderTable('opensrTable', data.opensr_bench_venus,
+    ['reflectance', 'spectral', 'synthesis', 'ha_metric', 'om_metric', 'im_metric']);
+  // No highlightMethod here deliberately: this local short run found
+  // lambda_sam=0.1 performed slightly WORSE than lambda_sam=0.0 on every
+  // metric (see RESULTS.md section 3) -- do not visually imply a "winner"
+  // until the real Kaggle-scale ablation closes this question.
+  renderTable('ablationTable', data.kudaliar_ablation, ['psnr', 'ssim', 'sam', 'ergas', 'ndvi_delta']);
+  const ablationNote = document.querySelector('#ablationTable').parentElement.querySelector('.desc');
+  if (data.kudaliar_ablation) {
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.textContent = 'Local short run (200 steps, 32×32 crop): λ_sam=0.1 performed slightly worse than λ_sam=0 on every metric here — not yet a converged result, see RESULTS.md.';
+    document.getElementById('ablationTable').after(note);
+  }
+}
+
+document.getElementById('runJobBtn').addEventListener('click', async () => {
+  const base = document.getElementById('apiBase').value.replace(/\/$/, '');
+  const region = document.getElementById('regionSelect').value;
+  const statusEl = document.getElementById('jobStatus');
+  const btn = document.getElementById('runJobBtn');
+  btn.disabled = true;
+  statusEl.textContent = 'Submitting job...';
+
+  try {
+    const createRes = await fetch(`${base}/jobs`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ demo_region: region }),
+    });
+    const { job_id } = await createRes.json();
+    statusEl.textContent = `Job ${job_id} submitted. Polling...`;
+
+    const poll = async () => {
+      const r = await fetch(`${base}/jobs/${job_id}`);
+      const j = await r.json();
+      if (j.status === 'done' || j.status === 'failed') {
+        statusEl.textContent = JSON.stringify(j, null, 2);
+        btn.disabled = false;
+      } else {
+        statusEl.textContent = `Status: ${j.status}...`;
+        setTimeout(poll, 2000);
+      }
+    };
+    poll();
+  } catch (e) {
+    statusEl.textContent = `Error: ${e.message}. Is the API running (uvicorn api.main:app)?`;
+    btn.disabled = false;
+  }
+});
+
+loadData();
+
+// --- Pre-baked live-prototype demo (web/demo_cache/, from scripts/prebake_demo.py) ---
+const REGION_LABELS = {
+  punjab_wheat: "Punjab wheat belt",
+  punjab_wheat_2: "Punjab wheat belt (2)",
+  kudaliar_telangana: "Kudaliar, Telangana (India GT site)",
+};
+let demoIndex = null;
+let activeRegion = null;
+
+function renderDemoRegion(region) {
+  activeRegion = region;
+  document.querySelectorAll(".region-tab").forEach(el =>
+    el.classList.toggle("active", el.dataset.region === region));
+
+  const report = demoIndex.reports[region];
+  const content = document.getElementById("demoContent");
+  if (!report || report.error) {
+    content.innerHTML = `<div class="placeholder-note">No cached result for this region yet` +
+      (report && report.error ? ` (error: ${report.error})` : "") +
+      `. Run: <code>python -m scripts.prebake_demo</code></div>`;
+    return;
+  }
+
+  const base = `demo_cache/${region}/`;
+  const passed = report.gate_passed;
+  const gr = report.gate_report || {};
+
+  content.innerHTML = `
+    <div class="gate-badge ${passed ? 'pass' : 'fail'}">
+      ${passed ? '✓ GATE PASSED — model output shipped' : '⚠ GATE FAILED — bicubic fallback shipped (never a silently-wrong tile)'}
+    </div>
+    <div class="gate-details">
+      SAM ${gr.spectral_deg !== undefined ? gr.spectral_deg.toFixed(2) : '?'}&deg;
+      &middot; reflectance L1 ${gr.reflectance_l1 !== undefined ? gr.reflectance_l1.toFixed(4) : '?'}
+      &middot; |&Delta;NDVI| ${gr.ndvi_delta !== undefined ? gr.ndvi_delta.toFixed(4) : '?'}
+      ${!passed && gr.reason ? `<br>reason: ${gr.reason}` : ''}
+      ${report.elapsed_seconds ? `<br>pipeline runtime: ${report.elapsed_seconds}s, output ${report.output_shape.join('×')}` : ''}
+    </div>
+    <div class="image-grid">
+      <div class="image-cell">
+        <img src="${base}lr.png" alt="LR input" onerror="this.parentElement.style.display='none'">
+        <div class="cap"><span>Input (10m, true colour)</span></div>
+      </div>
+      <div class="image-cell">
+        <img src="${base}reflectance.png" alt="SR output" onerror="this.parentElement.style.display='none'">
+        <div class="cap"><span>${passed ? 'SR output (2.5m)' : 'Bicubic fallback (2.5m)'}</span></div>
+      </div>
+      <div class="image-cell">
+        <img src="${base}landcover.png" alt="Land cover" onerror="this.parentElement.style.display='none'">
+        <div class="cap"><span>Land-cover (SRM head)</span></div>
+      </div>
+      <div class="image-cell">
+        <img src="${base}confidence.png" alt="Confidence map" onerror="this.parentElement.parentElement.querySelector('.cap span').textContent='Confidence map (not generated -- run without --skip-tta)'">
+        <div class="cap"><span>Confidence (TTA std-dev)</span></div>
+      </div>
+    </div>
+    <div class="placeholder-note" style="margin-top:14px;">
+      GeoTIFFs (QGIS-ready, CRS-correct): <a href="${base}${passed ? 'reflectance.tif' : 'reflectance_bicubic_fallback.tif'}" style="color:var(--accent)">reflectance</a>
+      &middot; <a href="${base}landcover.tif" style="color:var(--accent)">land-cover</a>
+    </div>
+  `;
+}
+
+async function loadDemoCache() {
+  try {
+    const res = await fetch("demo_cache/index.json", { cache: "no-store" });
+    demoIndex = await res.json();
+  } catch (e) {
+    document.getElementById("demoContent").innerHTML =
+      '<div class="placeholder-note">No demo cache found yet. Run: <code>python -m scripts.prebake_demo</code> then refresh this page.</div>';
+    return;
+  }
+
+  const tabs = document.getElementById("regionTabs");
+  tabs.innerHTML = "";
+  demoIndex.regions.forEach(region => {
+    const tab = document.createElement("div");
+    tab.className = "region-tab";
+    tab.dataset.region = region;
+    tab.textContent = REGION_LABELS[region] || region;
+    tab.addEventListener("click", () => renderDemoRegion(region));
+    tabs.appendChild(tab);
+  });
+
+  if (demoIndex.regions.length) renderDemoRegion(demoIndex.regions[0]);
+}
+
+loadDemoCache();
+</script>
+</body>
+</html>
